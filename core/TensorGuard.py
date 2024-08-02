@@ -133,7 +133,7 @@ def bug_detection_agent(item, exec_mode, level_mode, _shot, temperature, model):
 
         Task:
 
-        Commit message: {item['Bug report']}
+        Commit  message: {item['Bug report']}
         Code change: {item['Deleted lines']}{item['Added lines']}
         <output>
         """
