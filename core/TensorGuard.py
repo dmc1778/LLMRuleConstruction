@@ -14,7 +14,6 @@ client = OpenAI(
     api_key=os.environ.get(".env")
 )
 
-
 class MyEmbeddingFunction(EmbeddingFunction):
     def __call__(self, input: Documents) -> Embeddings:
         batch_embeddings = embedding_model.encode(input)
