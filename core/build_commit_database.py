@@ -169,9 +169,13 @@ def count_changes(changes):
     return total_patches
 
 
-def main(lib_owner, lib_name):
+def main(lib_owner, lib_name, task):
     repo_path = f"ml_repos/{lib_owner.lower()}/{lib_name.lower()}"
-    data = pd.read_csv(f'mining/commits_new/{lib_owner}/{lib_name}.csv')
+    
+    if task == 'rag':
+        data = pd.read_csv(f'mining/commits_{task}/{lib_owner}/{lib_name}.csv')
+    else:
+        data = pd.read_csv(f'mining/commits_{task}/{lib_owner}/{lib_name}.csv')
     # train_df, test_df = train_test_split(data, test_size=0.3, random_state=42)
     data_dict = {
         'train_data': data
@@ -180,8 +184,17 @@ def main(lib_owner, lib_name):
 
     total_modified_files = 0
     total_changes = 0
-    f = open(f'data/new_bug_data/{lib_name}_test_data.json', 'a')
-    f.write('[')
+    
+    if task == 'rag':
+        if not os.path.exists(f'data/rag_data'):
+            os.makedirs('data/rag_data')
+        f = open(f'data/rag_data/{lib_name}_rag_data.json', 'a')
+        f.write('[')
+    if task == 'test':
+        if not os.path.exists(f'data/test_data'):
+            os.makedirs('data/test_data')
+        f = open(f'data/test_data/{lib_name}_test_data.json', 'a')
+        f.write('[') 
     for k, v in data_dict.items():
         for idx, row in v.iterrows():
             commit_hash = row.iloc[0].split('/')[-1]
@@ -190,7 +203,7 @@ def main(lib_owner, lib_name):
             commit_data, output_list = get_commit_with_changes(repo_path, commit_hash, lib_owner,lib_name, idx, row)
             total_modified_files = total_modified_files + len(commit_data['changes'])
             total_changes = total_changes + count_changes(commit_data['changes'])
-            with open(f"data/new_bug_data/metadata_{lib_name}.txt", "w") as file:
+            with open(f"data/{task}_data/metadata_{lib_name}.txt", "w") as file:
                 file.write(f"Total number of changes:{total_modified_files}" + "\n")
                 file.write(f"Total number of hunks:{total_changes}" + "\n")
                             
@@ -207,5 +220,6 @@ def main(lib_owner, lib_name):
 if __name__ == '__main__':
     lib_owner = sys.argv[1]
     lib_name = sys.argv[2]
-    main(lib_owner, lib_name)
+    task = sys.argv[3]
+    main(lib_owner, lib_name, task)
     
