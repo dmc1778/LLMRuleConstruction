@@ -11,7 +11,7 @@ from chromadb.api.types import Documents, EmbeddingFunction, Embeddings
 embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 load_dotenv()
 client = OpenAI(
-    api_key=os.environ.get(".env")
+    api_key=os.environ.get("OPENAI_KEY")
 )
 
 class MyEmbeddingFunction(EmbeddingFunction):
@@ -371,18 +371,18 @@ def main(args):
 
                             
 if __name__ == '__main__':
-    libname = sys.argv[1]
-    num_iter = sys.argv[2]
-    granularity = sys.argv[3]
-    exec_mod = sys.argv[4]
-    task = sys.argv[5]
-    model = sys.argv[6]
+    # libname = sys.argv[1]
+    # num_iter = sys.argv[2]
+    # granularity = sys.argv[3]
+    # exec_mod = sys.argv[4]
+    # task = sys.argv[5]
+    # model = sys.argv[6]
 
-    # libname = 'pytorch'
-    # num_iter = 1
-    # granularity = 'patch_level'
-    # exec_mod = 'cot'
-    # task = 'generation'
-    # model = 'gpt-3.5-turbo'
+    libname = 'pytorch'
+    num_iter = 1
+    granularity = 'patch_level'
+    exec_mod = 'cot'
+    task = 'generation'
+    model = 'gpt-3.5-turbo'
     args = [libname, int(num_iter), granularity, exec_mod, task, model]
     main(args)
