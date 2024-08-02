@@ -1,7 +1,5 @@
 import sys
 from bs4 import BeautifulSoup as soup
-# from selenium import webdriver
-# driver = webdriver.Firefox(executable_path= r"/home/nimashiri/geckodriver-v0.32.0-linux64/geckodriver")
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 import re
@@ -16,8 +14,6 @@ import time, csv
 from pydriller import Repository
 from collections import Counter
 import numpy as np
-# from utils.helper_functions import recursive_parse_api_description, get_code_change, format_code, search, calculate_rule_importance
-# test
 ROOT_DIR = os.getcwd()
 
 REG_CHANGED = re.compile(".*@@ -(\d+),(\d+) \+(\d+),(\d+) @@.*")

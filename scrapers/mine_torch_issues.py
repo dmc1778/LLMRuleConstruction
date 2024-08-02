@@ -16,8 +16,6 @@ from collections import Counter
 from dotenv import load_dotenv
 load_dotenv()
 
-
-# (0, nimashiri2012@gmail.com, 1, cse19922021@gmail.com, 2, nshiri@yorku.ca, 3, nshiri@cse.yorku.ca)
 tokens = {0: os.getenv("GIT_TOKEN0"), 1: os.getenv("GIT_TOKEN1"),
           2: os.getenv("GIT_TOKEN2"), 3: os.getenv("GIT_TOKEN3")}
 
