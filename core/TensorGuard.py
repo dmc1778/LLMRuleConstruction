@@ -360,11 +360,12 @@ def main(args):
                                 output_data.insert(1, i)
                                 output_data.insert(2, item['commit_link'])
                                 output_data.insert(3, exec_mode)
-                                # if 'la bel' in item:
                                 output_data.insert(4, change['path'])
                                 output_data.insert(5, f"patch_{k}")
-                                #if args[4] == 'generation':
-                                output_data.insert(6, item['label'])
+                                if args[4] == 'generation':
+                                    output_data.insert(6, item['label'])
+                                else:
+                                    output_data.insert(6, 'this is detection task.')
                                 write_to_csv(output_data, libname)
                     else:
                         print('This commit has been already processed!')

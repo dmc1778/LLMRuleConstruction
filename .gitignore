@@ -7,11 +7,11 @@ __pycache__/
 *.so
 
 # files
-*.csv
-*.json
+# *.csv
+# *.json
 *.txt
 output/
-ml_repos/google/
+ml_repos
 
 # Distribution / packaging
 .Python
