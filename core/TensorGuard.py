@@ -132,8 +132,7 @@ def bug_detection_agent(item, exec_mode, level_mode, _shot, temperature, model):
         <output> {_shot[1]['Label']}
 
         Task:
-
-        Commit  message: {item['Bug report']}
+        Commit message: {item['Bug report']}
         Code change: {item['Deleted lines']}{item['Added lines']}
         <output>
         """
@@ -368,7 +367,7 @@ def main(args):
                                 output_data.insert(6, item['label'])
                                 write_to_csv(output_data, libname)
                     else:
-                        print('This instancee has been already processed!')
+                        print('This commit has been already processed!')
 
                             
 if __name__ == '__main__':
