@@ -77,13 +77,13 @@ def load_json(data_path):
         data = json.load(json_file)
     return data
 
-def write_to_csv(data, output_mode, libname):
-    with open(f"output/{output_mode}/{libname}_results.csv", 'a', encoding="utf-8", newline='\n') as file_writer:
+def write_to_csv(data, libname):
+    with open(f"output/{libname}_results.csv", 'a', encoding="utf-8", newline='\n') as file_writer:
         write = csv.writer(file_writer)
         write.writerow(data)
 
 # @backoff.on_exception(backoff.expo, openai.error.RateLimitError)
-def completions_with_backoff(prompt, temperature=0.2,  model='gpt-3.5-turbo'):
+def completions_with_backoff(prompt, temperature,  model='gpt-3.5-turbo'):
     response = client.chat.completions.create(
         model=model,
         temperature=temperature,
@@ -92,9 +92,8 @@ def completions_with_backoff(prompt, temperature=0.2,  model='gpt-3.5-turbo'):
         ]
     )
     return response
-def bug_interpretation_agent(item, exec_mode, level_mode, _shot):
-    if exec_mode == 'zero':
-        prompt_ = f"""
+def bug_interpretation_agent(item):
+    prompt_ = f"""
         You are an AI trained to understand the root cause of bugs in deep learning library backend code-base based on commit messages and code changes. 
         Given a commit message and code change, please explain why the code change is buggy.
 
@@ -102,24 +101,43 @@ def bug_interpretation_agent(item, exec_mode, level_mode, _shot):
         Code change:{item['Deleted lines']}{item['Added lines']} 
         <output>
         """
-    else:
-        prompt_ = f"""
-        You are an AI trained to understand the root cause of bugs in deep learning library backend code-base based on commit messages and code changes. 
-        Given a commit message and code change, please explain why the code change is buggy.
-
-        Example One:{_shot[0]['Deleted lines']}{_shot[0]['Added lines']}
-        Example Two:{_shot[1]['Deleted lines']}{_shot[1]['Added lines']}
-        
-        Commit message: {item['Bug report']}
-        Code change:{item['Deleted lines']}{item['Added lines']} 
-
-        <output>
-        """
-    response = completions_with_backoff(prompt_)
+    response = completions_with_backoff(prompt_, model='gpt-4o-mini')
     return response.choices[0].message.content
 
-def bug_detection_agent(item, exec_mode, level_mode, _shot, temperature):
+def bug_detection_agent(item, exec_mode, level_mode, _shot, temperature, model):
     if exec_mode == 'zero':
+        prompt_ = f"""
+        You are an AI trained to detect bugs in a deep learning library backend code-base based on commit messages and code changes. 
+        Your task is to determine whether a given commit introduces a bug or not. Please generate YES or NO.
+        
+        Commit message: {item['Bug report']}
+        Code chnage: {item['Deleted lines']}{item['Added lines']}
+
+        <output>
+        """
+    if exec_mode == 'few':
+        prompt_ = f"""
+        You are an AI trained to detect bugs in a deep learning library backend code-base based on commit messages and code changes. 
+        Your task is to determine whether a given commit introduces a bug or not. Given a commit message and deleted lines in the code change, 
+        detect if it is bug or not. Please generate YES or NO.
+        
+        Example One:
+        Commit message:{_shot[0]['Commit message']}
+        Code change:{_shot[0]['Deleted lines']}{_shot[0]['Added lines']}
+        <output> {_shot[0]['Label']}
+        
+        Example 2:
+        Commit message:{_shot[1]['Commit message']}
+        Code change:{_shot[1]['Deleted lines']}{_shot[1]['Added lines']}
+        <output> {_shot[1]['Label']}
+
+        Task:
+
+        Commit message: {item['Bug report']}
+        Code change: {item['Deleted lines']}{item['Added lines']}
+        <output>
+        """
+    if exec_mode == 'cot':
         prompt_ = f"""
         You are an AI trained to detect bugs in a deep learning library backend code-base based on commit messages and code changes. 
         Your task is to determine whether a given commit introduces a bug or not. 
@@ -138,47 +156,20 @@ def bug_detection_agent(item, exec_mode, level_mode, _shot, temperature):
 
         5. Make a Decision: Based on the above analysis, decide if the commit introduces a bug or not.
 
-        6. Output the Conclusion: Generate a clear output of "YES" if the commit introduces a bug, or "NO" if it does not.
+        6. Please generate YES or NO response.
         <output>
         """
-    else:
-        prompt_ = f"""
-        You are an AI trained to detect bugs in a deep learning library backend code-base based on commit messages and code changes. 
-        Your task is to determine whether a given commit introduces a bug or not. 
-        Follow the steps below to reason through the problem and arrive at a conclusion.
-        
-        1. Understand the commit message: Analyze the commit message to understand the context and purpose of the code change.
-        Commit message: {item['Bug report']}
-        
-        2. Review the Code Change: Examine the deleted and added lines of code to identify the modifications made.
-        Code change:{item['Deleted lines']}{item['Added lines']}
-        
-        3. You are also given the following examples of buggy changes:
-        Example One:{_shot[0]['Deleted lines']}{_shot[0]['Added lines']}
-        Example Two:{_shot[1]['Deleted lines']}{_shot[1]['Added lines']}
-        
-        4. Identify Potential Issues: Look for any missing, improper, or insufficient checkers within the code change. 
-        Checkers might include error handling, input validation, boundary checks, or other safety mechanisms.
-        
-        5. Analyze the Impact: Consider the impact of the identified issues on the functionality and reliability of the deep learning libraries. 
-
-        6. Make a Decision: Based on the above analysis, decide if the commit introduces a bug or not.
-
-        7. Output the Conclusion: Generate a clear output of "YES" if the commit introduces a bug, or "NO" if it does not.
-    
-        <output>
-        """
-    response = completions_with_backoff(prompt_, temperature)
+    response = completions_with_backoff(prompt_, temperature, model=model)
     return response.choices[0].message.content
 
 
-def root_cause_analysis_agent(commit_message, temperature):
+def root_cause_analysis_agent(commit_message, temperature, model):
     prompt_ = f"""
     Please describe the root cause of the bug based on the following commit message: {commit_message}
     
     <output>
     """
-    response = completions_with_backoff(prompt_)
+    response = completions_with_backoff(prompt_,temperature, model=model)
     return response.choices[0].message.content
 
 def pattern_extraction_agent(code_removed, code_added):
@@ -191,7 +182,7 @@ def pattern_extraction_agent(code_removed, code_added):
     response = completions_with_backoff(prompt_)
     return response.choices[0].message.content
 
-def path_generation_agent(bug_explanation, _shot, code_snippet, exec_mode, level_mode, lib_name, temperature):
+def path_generation_agent(bug_explanation, _shot, code_snippet, exec_mode, level_mode, lib_name, temperature, model):
     #if code_snippet[0]:
     #ext_knowledge = test_inference(lib_name, bug_explanation, level_mode)
     #else:
@@ -209,7 +200,7 @@ def path_generation_agent(bug_explanation, _shot, code_snippet, exec_mode, level
         You must generate a patch, with no additional explanation.
         <output>
         """
-    else:
+    if exec_mod == 'few':
         prompt_ = f"""
         You are given a bug explanation and an external knowledge for fixing a buggy code snippet. Please think 
         step by step and generate a patch to fix the bug in the code snippet. 
@@ -221,13 +212,44 @@ def path_generation_agent(bug_explanation, _shot, code_snippet, exec_mode, level
         Example Two:{_shot[1]['Deleted lines']}{_shot[1]['Added lines']}
         
         Bug explanation: {bug_explanation}
-        External knowledge: {ext_knowledge}
-        Code snippet: {code_snippet}
+        External context: {ext_knowledge}
+        Code snippet: {code_snippet[0]}
         Your must generate a patch, with no additional explanation.
         <output>
         """
-    
-    response = completions_with_backoff(prompt_, temperature)
+    if exec_mod == 'cot':
+        prompt_ = f"""
+        You are given a bug explanation and an external knowledge for fixing a buggy code snippet.
+        Follow the steps below to reason through the problem and arrive at a conclusion to generate a patch to fix the bug in the code snippet.
+        
+        1. Understand the Bug Explanation:
+            Carefully read the bug explanation provided.
+            Identify the core issue described in the explanation.
+            Bug explanation: {bug_explanation}
+
+        2. Incorporate External Knowledge:
+            Review the external knowledge provided for fixing the bug.
+            Determine how this knowledge can be applied to the code snippet.
+            External knowledge: {ext_knowledge}
+
+        3. Analyze the Code Snippet:
+            Examine the given code snippet to locate the buggy section.
+            Note any specific lines or patterns mentioned in the bug explanation.
+            Code snippet: {code_snippet[0]}
+
+        4. Apply the Fixing Pattern:
+            Think about how the given pattern can be applied to the identified bug.
+            Ensure that the application of the pattern aligns with the external knowledge provided.
+
+        5. Generate the Patch:
+            Create a patch to fix the bug in the code snippet.
+            Focus solely on fixing the functional issue, ignoring any indentation problems.
+            
+        Review Examples:
+        Example One: {_shot[0]['Deleted lines']} {_shot[0]['Added lines']}
+        Example Two: {_shot[1]['Deleted lines']} {_shot[1]['Added lines']}
+                """
+    response = completions_with_backoff(prompt_, temperature, model=model)
     return response.choices[0].message.content
 
 def single_agent(commit_msg, deleted_code):
@@ -244,64 +266,63 @@ def single_agent(commit_msg, deleted_code):
     response = completions_with_backoff(prompt_)
     return response.choices[0].message.content
 
-def tensorGuard(item, exec_mode, level_mode,_shot_list, lib_name, task, temperature, use_single_agent):
-    if use_single_agent:
-        patch_ = single_agent(item['Bug report'], item['Deleted lines'])
-    else:
-        
-        bug_label = bug_detection_agent(item, exec_mode, level_mode, _shot_list, temperature)
+def tensorGuard(item, exec_mode, level_mode,_shot_list, lib_name, task, temperature, model, use_single_agent):
+    if task == 'detection':
+        bug_label = bug_detection_agent(item, exec_mode, level_mode, _shot_list, temperature, model)
         if task == 'detection' and is_buggy(bug_label):
-            output = bug_interpretation_agent(item, exec_mode, level_mode, _shot_list)
-            return [item['Deleted lines'], 'Yes', output]
-        elif task == 'detection' and not is_buggy(bug_label):
-            return [item['Deleted lines'], 'No']
-        else:
-            if is_buggy(bug_label):
-                bug_understanding = root_cause_analysis_agent(item['Bug report'], temperature)
-                # fix_pattern = pattern_extraction_agent(item['Deleted lines'], item['Added lines'])
-                if level_mode == 'patch_level':
-                    patch_ = path_generation_agent(bug_understanding, _shot_list, [item['Deleted lines'], item['Added lines']], exec_mode, level_mode, lib_name, temperature)
-                    output_data = ['YES', item['Deleted lines'], f"{item['Added lines']}", patch_, bug_understanding]
-                else:
-                    patch_ = path_generation_agent(bug_understanding, _shot_list, [item['Whole deleted'], ''], exec_mode, level_mode, lib_name, temperature)
-                    output_data = ['YES', item['Deleted lines'], item['Added lines'], patch_, bug_understanding]
+            interpretation_ = bug_interpretation_agent(item)
+            output_data = [bug_label, item['Deleted lines'], interpretation_]
+        return output_data
+    else:
+        bug_label = bug_detection_agent(item, exec_mode, level_mode, _shot_list, temperature, model)
+        if is_buggy(bug_label):
+            bug_understanding = root_cause_analysis_agent(item['Bug report'], temperature, model)
+                    # fix_pattern = pattern_extraction_agent(item['Deleted lines'], item['Added lines'])
+            if level_mode == 'patch_level':
+                patch_ = path_generation_agent(bug_understanding, _shot_list, [item['Deleted lines'], item['Added lines']], exec_mode, level_mode, lib_name, temperature, model)
+                output_data = ['YES', item['Deleted lines'], f"{item['Added lines']}", patch_, bug_understanding]
             else:
-                output_data = ['NO', item['Deleted lines'], ]
-    return output_data
+                patch_ = path_generation_agent(bug_understanding, _shot_list, [item['Whole deleted'], ''], exec_mode, level_mode, lib_name, temperature, model)
+                output_data = ['YES', item['Deleted lines'], item['Added lines'], patch_, bug_understanding]
+        else:
+            output_data = ['NO', item['Deleted lines']]
+        return output_data
 
 def main(args):
     lib_name = args[0]
     data_path = f"data/test data/filter2/{lib_name}_test_data.json"
     rule_path = f"data/rule_set.json"
+
+    num_iter = args[1]
+    level_mode = args[2]
+    model = args[5]
     
     if args[3] == 'zero':
         exec_type = ['zero']
-    elif args[3] == 'few':
+    if args[3] == 'few':
         exec_type = ['few']
-    else:
-        exec_type = ['zero', 'few']
-    
-    num_iter = args[1]
-    level_mode = args[2]
+    if args[3] == 'cot':
+        exec_type = ['cot']
+    if args[3] == 'all':
+        exec_type = ['few', 'zero', 'cot']
 
     rule_data = load_json(rule_path)
     data = load_json(data_path)
     
     # data = random.sample(data, 3)
-    for temp in [0.5, 0.8]:
+    for temp in [0]:
         temperature = temp
         for exec_mode in exec_type:        
-            output_mode = f"{exec_mode}_shot"
             # if exec_mode == 'few':
             #     data = filter_dataset(data)
             for i in range(num_iter):
-                hisotry_file = f'logs/{exec_mode}_shot/{exec_mode}_processed_commits_{libname}_{i}_{temperature}.txt'
+                hisotry_file = f'logs/{exec_mode}/{exec_mode}_processed_commits_{libname}_{i}_{temperature}.txt'
                 if not os.path.exists(hisotry_file):
                     f1 = open(hisotry_file, 'a')
-                hist = read_txt(f'logs/{exec_mode}_shot/{exec_mode}_processed_commits_{libname}_{i}_{temperature}.txt')
+                hist = read_txt(f'logs/{exec_mode}/{exec_mode}_processed_commits_{libname}_{i}_{temperature}.txt')
                 for j, item in enumerate(data):
                     if item['commit_link'] not in hist:
-                        write_list_to_txt(item['commit_link'], f'logs/{exec_mode}_shot/{exec_mode}_processed_commits_{libname}_{i}_{temperature}.txt')
+                        write_list_to_txt(item['commit_link'], f'logs/{exec_mode}/{exec_mode}_processed_commits_{libname}_{i}_{temperature}.txt')
                         for change in item['changes']:
                             if not change:
                                 continue
@@ -314,7 +335,7 @@ def main(args):
                                     deleted_lines, added_lines = separate_added_deleted(patch['hunk'])
                                 else:
                                     deleted_lines, added_lines = separate_added_deleted(change['whole_hunk'])
-                                if exec_mode == 'few':
+                                if exec_mode == 'few' or exec_mod == 'cot':
                                     rand_num = random.randint(1, 13)
                                     _shot = [rule_data[f"entry{rand_num}"]['example1'], rule_data[f"entry{rand_num}"]['example2']]
                                     if item['commit_link'] == _shot[0]['commit_link'] or item['commit_link'] == _shot[1]['commit_link']:
@@ -335,7 +356,7 @@ def main(args):
                                         # 'Whole added': change['whole_added']
                                     }
                                     
-                                output_data = tensorGuard(new_item, exec_mode, level_mode, _shot, lib_name, args[4], temperature, use_single_agent=False)
+                                output_data = tensorGuard(new_item, exec_mode, level_mode, _shot, lib_name, args[4], temperature, model, use_single_agent=False)
                                 output_data.insert(0, temperature)
                                 output_data.insert(1, i)
                                 output_data.insert(2, item['commit_link'])
@@ -343,8 +364,9 @@ def main(args):
                                 # if 'la bel' in item:
                                 output_data.insert(4, change['path'])
                                 output_data.insert(5, f"patch_{k}")
+                                #if args[4] == 'generation':
                                 output_data.insert(6, item['label'])
-                                write_to_csv(output_data, output_mode, libname)
+                                write_to_csv(output_data, libname)
                     else:
                         print('This instancee has been already processed!')
 
@@ -355,11 +377,13 @@ if __name__ == '__main__':
     granularity = sys.argv[3]
     exec_mod = sys.argv[4]
     task = sys.argv[5]
-    # temp = sys.argv[6]
+    model = sys.argv[6]
+
     # libname = 'pytorch'
     # num_iter = 1
     # granularity = 'patch_level'
-    # exec_mod = 'zero'
+    # exec_mod = 'cot'
     # task = 'generation'
-    args = [libname, int(num_iter), granularity, exec_mod, task]
+    # model = 'gpt-3.5-turbo'
+    args = [libname, int(num_iter), granularity, exec_mod, task, model]
     main(args)

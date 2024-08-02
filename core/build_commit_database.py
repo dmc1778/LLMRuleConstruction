@@ -171,7 +171,7 @@ def count_changes(changes):
 
 def main(lib_owner, lib_name):
     repo_path = f"ml_repos/{lib_owner.lower()}/{lib_name.lower()}"
-    data = pd.read_csv(f'mining/commits_rag/{lib_owner}/{lib_name}.csv')
+    data = pd.read_csv(f'mining/commits_new/{lib_owner}/{lib_name}.csv')
     # train_df, test_df = train_test_split(data, test_size=0.3, random_state=42)
     data_dict = {
         'train_data': data
@@ -180,7 +180,7 @@ def main(lib_owner, lib_name):
 
     total_modified_files = 0
     total_changes = 0
-    f = open(f'data/RAG_data/{lib_name}_rag_data.json', 'a')
+    f = open(f'data/new_bug_data/{lib_name}_test_data.json', 'a')
     f.write('[')
     for k, v in data_dict.items():
         for idx, row in v.iterrows():
@@ -190,7 +190,7 @@ def main(lib_owner, lib_name):
             commit_data, output_list = get_commit_with_changes(repo_path, commit_hash, lib_owner,lib_name, idx, row)
             total_modified_files = total_modified_files + len(commit_data['changes'])
             total_changes = total_changes + count_changes(commit_data['changes'])
-            with open(f"data/RAG_data/metadata_{lib_name}.txt", "w") as file:
+            with open(f"data/new_bug_data/metadata_{lib_name}.txt", "w") as file:
                 file.write(f"Total number of changes:{total_modified_files}" + "\n")
                 file.write(f"Total number of hunks:{total_changes}" + "\n")
                             

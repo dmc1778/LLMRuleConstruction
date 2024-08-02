@@ -62,5 +62,5 @@ def main(libname):
                                         
 
 if __name__ == '__main__':
-    libname = 'pytorch'
+    libname = 'tensorflow'
     main(libname)

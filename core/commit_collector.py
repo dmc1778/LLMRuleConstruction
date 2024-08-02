@@ -27,11 +27,11 @@ def no_matches_in_commit(commit_message, patterns):
     return False
 
 
-def save_commit(data, lib):
-    if not os.path.exists(f'mining/commits_rag/{lib}/'):
-        os.makedirs(f'mining/commits_rag/{lib}/')
+def save_commit(data, owner, libname):
+    if not os.path.exists(f'mining/commits_new/{owner}/'):
+        os.makedirs(f'mining/commits_new/{owner}/')
 
-    with open(f"mining/commits_rag/{lib}/{lib}.csv","a", newline="\n",) as fd:
+    with open(f"mining/commits_new/{owner}/{libname}.csv","a", newline="\n",) as fd:
         writer_object = csv.writer(fd)
         writer_object.writerow(data)
 
@@ -176,7 +176,7 @@ def main(owner, repo_name):
                         print('this change is related to tests, so I am ignoring it.')
                         continue
                         # if no_matches_in_commit(com.message, patterns):
-                #if _match1 or _match2 or _match3 or _match4:
+                if _match1 or _match2 or _match3 or _match4:
                                 # prompt_ = stage_2_prompting(com.message, r_prime[3])
                                 # t_count = get_token_count(prompt_)
                                 # if t_count <= 4097:
@@ -186,14 +186,14 @@ def main(owner, repo_name):
                                 #     decision_split = decision.split('\n')
                                 #     filtered_list = list(filter(None, decision_split))
 
-                commit_link = REPO_LIST[0] + "/commits/" + com.hexsha
-                commit_date = com.committed_date
-                dt_object = datetime.fromtimestamp(commit_date)
-                commit_date = dt_object.replace(tzinfo=timezone.utc)
-                # print(commit_date.year)
-                if commit_date.year < 2024:
-                    data = [commit_link, commit_date.strftime("%Y-%m-%d")]
-                    save_commit(data, r_prime[3])
+                    commit_link = REPO_LIST[0] + "/commit/" + com.hexsha
+                    commit_date = com.committed_date
+                    dt_object = datetime.fromtimestamp(commit_date)
+                    commit_date = dt_object.replace(tzinfo=timezone.utc)
+                    # print(commit_date.year)
+                    if commit_date.year > 2023:
+                        data = [commit_link, commit_date.strftime("%Y-%m-%d")]
+                        save_commit(data, owner, repo_name)
             else:
                 print('This commit has been already analyzed!')
 
