@@ -17,16 +17,16 @@ TensorGuard performs bug detection and program repair at the repository level, f
 You can access all of our data as follows:
 
 #### Keywords for filtering checker bugs
-[Keywords](https://github.com/dmc1778/TensorGuard/blob/master/assets/all_keywords.csv)<br>
+[Keywords](https://github.com/icsecs1992/TensorGuard/blob/master/assets/all_keywords.csv)<br>
 
 #### Taxonomy of Checker Bugs
-[Taxonomy data](https://github.com/dmc1778/TensorGuard/blob/master/assets/taxonomyData.csv)<br>
+[Taxonomy data](https://github.com/icsecs1992/TensorGuard/blob/master/assets/taxonomyData.csv)<br>
 
 
 | Library | Commits used for Taxonomy Creation | Evaluation Data | RAG Data |
 |----------|----------|----------|----------|
-| PyTorch | [PyTorch commits](https://github.com/dmc1778/TensorGuard/blob/master/mining/commits/pytorch/pytorch.csv) | [PyTorch test data](https://github.com/dmc1778/TensorGuard/blob/master/data/test%20data/filter2/pytorch_test_data.json) | [PyTorch commits](https://github.com/dmc1778/TensorGuard/blob/master/mining/commits_rag/pytorch/pytorch.csv) |
-| TensorFlow | [TensorFlow commits](https://github.com/dmc1778/TensorGuard/blob/master/mining/commits/tensorflow/tensorflow.csv) | [TensorFlow test data](https://github.com/dmc1778/TensorGuard/blob/master/data/test%20data/filter2/tensorflow_test_data.json) | [TensorFlow commits](https://github.com/dmc1778/TensorGuard/blob/master/mining/commits_rag/tensorflow/tensorflow.csv) |
+| PyTorch | [PyTorch commits](https://github.com/icsecs1992/TensorGuard/blob/master/mining/commits/pytorch/pytorch.csv) | [PyTorch test data](https://github.com/icsecs1992/TensorGuard/blob/master/data/test%20data/filter2/pytorch_test_data.json) | [PyTorch commits](https://github.com/icsecs1992/TensorGuard/blob/master/mining/commits_rag/pytorch/pytorch.csv) |
+| TensorFlow | [TensorFlow commits](https://github.com/icsecs1992/TensorGuard/blob/master/mining/commits/tensorflow/tensorflow.csv) | [TensorFlow test data](https://github.com/icsecs1992/TensorGuard/blob/master/data/test%20data/filter2/tensorflow_test_data.json) | [TensorFlow commits](https://github.com/icsecs1992/TensorGuard/blob/master/mining/commits_rag/tensorflow/tensorflow.csv) |
 
 
 ### :hammer: Setup & Running
@@ -48,7 +48,7 @@ conda install --file environment.json
 After that, clone TensorGuard's repository and then cd to its directory:
 
 ```
-https://github.com/dmc1778/TensorGuard.git
+https://github.com/icsecs1992/TensorGuard.git
 cd TensorGuard
 ```
 
